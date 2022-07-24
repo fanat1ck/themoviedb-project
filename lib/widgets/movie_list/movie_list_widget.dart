@@ -1,97 +1,28 @@
 import 'package:flutter/material.dart';
-import 'package:themoviedb/resources/resources.dart';
+import 'package:themoviedb/Library/Widget/Inherited/provider.dart';
+import 'package:themoviedb/domain/api_client/api_client.dart';
+import 'package:themoviedb/widgets/movie_list/movie_list_model.dart';
 
-class Movie {
-  final String imageName;
-  final String title;
-  final String time;
-  final String description;
-
-  Movie(
-      {required this.imageName,
-      required this.title,
-      required this.time,
-      required this.description});
-}
-
-class MovieListWidget extends StatefulWidget {
+class MovieListWidget extends StatelessWidget {
   const MovieListWidget({Key? key}) : super(key: key);
 
   @override
-  State<MovieListWidget> createState() => _MovieListWidgetState();
-}
-
-class _MovieListWidgetState extends State<MovieListWidget> {
-  final _movies = [
-    Movie(
-      imageName: AppImages.movie,
-      title: 'Morbius',
-      time: 'Aprile 7, 2022',
-      description:
-          'Dangerously ill with a rare blood disorder, and determined to save others suffering his same fate, Dr. Michael Morbius attempts a desperate gamble. What at first appears to be a radical success soon reveals itself to be a remedy potentially worse than the disease.',
-    ),
-    Movie(
-      imageName: AppImages.movie,
-      title: 'Morbius',
-      time: 'Aprile 7, 2022',
-      description:
-          'Dangerously ill with a rare blood disorder, and determined to save others suffering his same fate, Dr. Michael Morbius attempts a desperate gamble. What at first appears to be a radical success soon reveals itself to be a remedy potentially worse than the disease.',
-    ),
-    Movie(
-      imageName: AppImages.movie,
-      title: 'Morbius',
-      time: 'Aprile 7, 2022',
-      description:
-          'Dangerously ill with a rare blood disorder, and determined to save others suffering his same fate, Dr. Michael Morbius attempts a desperate gamble. What at first appears to be a radical success soon reveals itself to be a remedy potentially worse than the disease.',
-    ),
-    Movie(
-      imageName: AppImages.movie,
-      title: 'Morbius',
-      time: 'Aprile 7, 2022',
-      description:
-          'Dangerously ill with a rare blood disorder, and determined to save others suffering his same fate, Dr. Michael Morbius attempts a desperate gamble. What at first appears to be a radical success soon reveals itself to be a remedy potentially worse than the disease.',
-    ),
-    Movie(
-      imageName: AppImages.movie,
-      title: 'Morbius',
-      time: 'Aprile 7, 2022',
-      description:
-          'Dangerously ill with a rare blood disorder, and determined to save others suffering his same fate, Dr. Michael Morbius attempts a desperate gamble. What at first appears to be a radical success soon reveals itself to be a remedy potentially worse than the disease.',
-    ),
-  ];
-
-  var _filterMovies = <Movie>[];
-  final _searchController = TextEditingController();
-  void _serchMovies() {
-    if (_searchController.text.isNotEmpty) {
-      _filterMovies = _movies.where((Movie movie) {
-        return movie.title
-            .toLowerCase()
-            .contains(_searchController.text.toLowerCase());
-      }).toList();
-    } else {
-      _filterMovies = _movies;
-    }
-    setState(() {});
-  }
-
-  @override
-  void initState() {
-    _filterMovies = _movies;
-    _searchController.addListener(_serchMovies);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final model = NotifierProvider.watch<MovieListModel>(context);
+
+    if (model == null) return const SizedBox.shrink();
     return Stack(
       children: [
         ListView.builder(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.only(top: 70),
-          itemCount: _filterMovies.length,
+          itemCount: model.movies.length,
           itemExtent: 163,
           itemBuilder: (BuildContext context, int index) {
-            final movie = _movies[index];
+            model.showMovieAtIndex(index);
+            final movie = model.movies[index];
+            final posterPath = movie.posterPath;
+            final releaseDate = movie.releaseDate;
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Stack(
@@ -114,7 +45,13 @@ class _MovieListWidgetState extends State<MovieListWidget> {
                         ]),
                     child: Row(
                       children: [
-                        Image(image: AssetImage(movie.imageName)),
+                        posterPath != null
+                            ? Image.network(
+                                ApiClient.imageUrl(posterPath),
+                                width: 95,
+                              )
+                            : const SizedBox.shrink(),
+                        // Image(image: AssetImage(movie.imageName)),
                         const SizedBox(width: 15),
                         Expanded(
                           child: Column(
@@ -130,13 +67,12 @@ class _MovieListWidgetState extends State<MovieListWidget> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                movie.time,
-                                maxLines: 1,
+                                model.stringFromDate(releaseDate),
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(color: Colors.grey),
                               ),
                               const SizedBox(height: 20),
-                              Text(movie.description,
+                              Text(movie.overview,
                                   maxLines: 2, overflow: TextOverflow.ellipsis),
                             ],
                           ),
@@ -148,10 +84,9 @@ class _MovieListWidgetState extends State<MovieListWidget> {
                   Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(10),
-                      onTap: () {},
-                    ),
-                  )
+                        borderRadius: BorderRadius.circular(10),
+                        onTap: () => model.onMovieTap(context, index)),
+                  ),
                 ],
               ),
             );
@@ -160,7 +95,7 @@ class _MovieListWidgetState extends State<MovieListWidget> {
         Padding(
           padding: const EdgeInsets.all(10),
           child: TextField(
-            controller: _searchController,
+            onChanged: model.searchMovie,
             decoration: InputDecoration(
               labelText: 'Пошук',
               filled: true,

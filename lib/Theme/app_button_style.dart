@@ -11,4 +11,12 @@ abstract class AppButtonStyle {
       textStyle: MaterialStateProperty.all(
           const TextStyle(fontWeight: FontWeight.w400, fontSize: 16)),
       foregroundColor: MaterialStateProperty.all((color)));
+
+  static final loginButton = ButtonStyle(
+      backgroundColor: MaterialStateProperty.all(color),
+      foregroundColor: MaterialStateProperty.all(Colors.white),
+      textStyle: MaterialStateProperty.all(
+          const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+      padding: MaterialStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 15, vertical: 8)));
 }

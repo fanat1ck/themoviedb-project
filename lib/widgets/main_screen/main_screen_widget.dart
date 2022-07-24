@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:themoviedb/Library/Widget/Inherited/provider.dart';
+import 'package:themoviedb/widgets/movie_list/movie_list_model.dart';
 
 import '../movie_list/movie_list_widget.dart';
 
@@ -13,17 +15,24 @@ class _MainScreenWidgetState extends State<MainScreenWidget> {
   int _selectedTab = 0;
   static const TextStyle optionStyle =
       TextStyle(fontSize: 30, fontWeight: FontWeight.bold);
+  final modelMovieList = MovieListModel();
 
   void onSelectTab(int index) {
     if (_selectedTab != index) {
       _selectedTab = index;
       setState(() {});
-      print(index);
     }
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    modelMovieList.setupLocale(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // final model = NotifierProvider.read<MainScreenModel>(context);
     return Scaffold(
         appBar: AppBar(
           title: const Text('TMDB'),
@@ -42,15 +51,13 @@ class _MainScreenWidgetState extends State<MainScreenWidget> {
         body: IndexedStack(
           index: _selectedTab,
           children: [
-            const Text(
-              'Новини',
-              style: optionStyle,
+            const Center(child: Text('Новини', style: optionStyle)),
+            NotifierProvider(
+              create: () => modelMovieList,
+              isManagingModel: false,
+              child: const MovieListWidget(),
             ),
-            MovieListWidget(),
-            const Text(
-              'Серіали',
-              style: optionStyle,
-            ),
+            const Center(child: Text('Серіали', style: optionStyle)),
           ],
         ));
   }

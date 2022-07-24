@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:themoviedb/Library/Widget/Inherited/provider.dart';
 import 'package:themoviedb/Theme/app_button_style.dart';
+import 'package:themoviedb/widgets/auth/auth_model.dart';
 
 class AuthWidget extends StatelessWidget {
   const AuthWidget({Key? key}) : super(key: key);
@@ -59,52 +61,20 @@ class __HeaderWidgetState extends State<_HeaderWidget> {
   }
 }
 
-class _FormWidget extends StatefulWidget {
+class _FormWidget extends StatelessWidget {
   const _FormWidget({Key? key}) : super(key: key);
 
   @override
-  State<_FormWidget> createState() => __FormWidgetState();
-}
-
-class __FormWidgetState extends State<_FormWidget> {
-  final _loginTextController = TextEditingController(text: 'admin');
-  final _resetPasswordController = TextEditingController(text: 'admin');
-
-  String? _textError = null;
-  void _auth() {
-    final login = _loginTextController.text;
-    final password = _resetPasswordController.text;
-    if (login == 'admin' && password == 'admin') {
-      _textError = null;
-      Navigator.pushReplacementNamed(context, '/main_screen');
-    } else {
-      _textError = 'Не правильний пароль';
-      print('show error');
-    }
-    setState(() {});
-  }
-
-  void _resetPassword() {
-    print('Reset Password');
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final textError = _textError;
+    final model = NotifierProvider.read<AuthModel>(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (textError != null) ...[
-          Text(
-            textError,
-            style: const TextStyle(color: Colors.red, fontSize: 17),
-          ),
-          const SizedBox(height: 20)
-        ],
+        const _ErrorMassageWidget(),
         const Text('Username', style: AppButtonStyle.textStyle),
         const SizedBox(height: 5),
         TextField(
-            controller: _loginTextController,
+            controller: model?.loginTextController,
             decoration: AppButtonStyle.textFieldDecoration),
         const SizedBox(height: 25),
         const Text(
@@ -113,34 +83,65 @@ class __FormWidgetState extends State<_FormWidget> {
         ),
         const SizedBox(height: 5),
         TextField(
-          controller: _resetPasswordController,
+          controller: model?.resetPasswordController,
           decoration: AppButtonStyle.textFieldDecoration,
           obscureText: true,
         ),
         const SizedBox(height: 25),
         Row(
           children: [
-            ElevatedButton(
-              style: ButtonStyle(
-                  backgroundColor:
-                      MaterialStateProperty.all(AppButtonStyle.color),
-                  foregroundColor: MaterialStateProperty.all(Colors.white),
-                  textStyle: MaterialStateProperty.all(const TextStyle(
-                      fontWeight: FontWeight.w700, fontSize: 16)),
-                  padding: MaterialStateProperty.all(
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 8))),
-              onPressed: _auth,
-              child: const Text('Login'),
-            ),
+            const _AuthButtonWidget(),
             const SizedBox(width: 30),
             TextButton(
               style: AppButtonStyle.linkButton,
-              onPressed: _resetPassword,
+              onPressed: () {},
               child: const Text('Reset password'),
             )
           ],
         )
       ],
+    );
+  }
+}
+
+class _AuthButtonWidget extends StatelessWidget {
+  const _AuthButtonWidget({
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final model = NotifierProvider.watch<AuthModel>(context);
+
+    final onPressed =
+        model?.canStartAuth == true ? () => model?.auth(context) : null;
+    final child = model?.isAuthProgress == true
+        ? const SizedBox(
+            height: 15, width: 20, child: CircularProgressIndicator())
+        : const Text('Login');
+    return ElevatedButton(
+      style: AppButtonStyle.loginButton,
+      onPressed: onPressed,
+      child: child,
+    );
+  }
+}
+
+class _ErrorMassageWidget extends StatelessWidget {
+  const _ErrorMassageWidget({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final errorMassage =
+        NotifierProvider.watch<AuthModel>(context)?.errorMassage;
+    if (errorMassage == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Text(
+        errorMassage,
+        style: const TextStyle(color: Colors.red, fontSize: 17),
+      ),
     );
   }
 }
